@@ -32,11 +32,11 @@ fn can_subscribe_and_unsubscribe() {
     ob.set(12);
     assert_eq!(SUBSCRIBE_CALL_COUNT.load(Ordering::Relaxed), 3);
 
-    ob.unsubscribe(&unsubscribe1);
+    unsubscribe1();
     ob.set(13);
     assert_eq!(SUBSCRIBE_CALL_COUNT.load(Ordering::Relaxed), 4);
 
-    ob.unsubscribe(&unsubscribe2);
+    unsubscribe2();
     ob.set(14);
     assert_eq!(SUBSCRIBE_CALL_COUNT.load(Ordering::Relaxed), 4);
 }

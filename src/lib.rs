@@ -1,26 +1,11 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicI64, Ordering};
 
-static TOKEN_NUMBER: AtomicI64 = AtomicI64::new(0);
-
-#[derive(PartialEq, Eq, Hash, Clone)]
-pub struct UniqToken {
-    id: i64,
-}
-
-impl UniqToken {
-    fn new() -> UniqToken {
-        UniqToken {
-            id: TOKEN_NUMBER.fetch_add(1, Ordering::Relaxed)
-        }
-    }
-}
-
 static SUBSCRIPTION_ID: AtomicI64 = AtomicI64::new(0);
 
 pub struct Observable<T> {
     value: T,
-    subscribers: HashMap<UniqToken, fn()>,
+    subscribers: HashMap<i64, fn()>,
 }
 
 impl<T> Observable<T> {
@@ -35,14 +20,12 @@ impl<T> Observable<T> {
         }
     }
 
-    pub fn subscribe(&mut self, callback: fn()) -> UniqToken {
-        let cleanup_token = UniqToken::new();
-        self.subscribers.insert(cleanup_token.clone(), callback);
-        cleanup_token
-    }
-
-    pub fn unsubscribe(&mut self, token: &UniqToken) {
-        self.subscribers.remove(token);
+    pub fn subscribe(&mut self, callback: fn()) -> impl FnOnce() + '_ {
+        let id = SUBSCRIPTION_ID.fetch_add(1, Ordering::Relaxed);
+        self.subscribers.insert(id, callback);
+        move || {
+            self.subscribers.remove(&id);
+        }
     }
 }
 
